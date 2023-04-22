@@ -55,8 +55,8 @@ DICTIONNAIRE_IMAGES_CARTES = {}
 DICTIONNAIRE_POINTS_CARTE_VALEUR = {1:  {'NA': 11, 'A': 11, 'SA': 19, 'TA': 6 },
                                     10: {'NA': 10, 'A': 10, 'SA': 10, 'TA': 5 },
                                     13: {'NA': 4 , 'A': 4 , 'SA': 4 , 'TA': 3 },
-                                    12: {'NA': 3 , 'A': 3 , 'SA': 3 , 'TA': 2 },
-                                    11: {'NA': 2 , 'A': 20, 'SA': 2 , 'TA': 13},
+                                    12: {'NA': 3 , 'A': 3 , 'SA': 3 , 'TA': 1 },
+                                    11: {'NA': 2 , 'A': 20, 'SA': 2 , 'TA': 14},
                                     9:  {'NA': 0 , 'A': 14, 'SA': 0 , 'TA': 9 },
                                     8:  {'NA': 0 , 'A': 0 , 'SA': 0 , 'TA': 0 },
                                     7:  {'NA': 0 , 'A': 0 , 'SA': 0 , 'TA': 0 }}
