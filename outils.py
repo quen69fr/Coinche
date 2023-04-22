@@ -52,14 +52,14 @@ ENCHERE_CRAN = 5
 
 LISTE_NOMS_CARTES = []
 DICTIONNAIRE_IMAGES_CARTES = {}
-DICTIONNAIRE_POINTS_CARTE_VALEUR = {1:  {'NA': 11, 'A': 11, 'SA': 19},
-                                    10: {'NA': 10, 'A': 10, 'SA': 10},
-                                    13: {'NA': 4 , 'A': 4 , 'SA': 4 },
-                                    12: {'NA': 3 , 'A': 3 , 'SA': 3 },
-                                    11: {'NA': 2 , 'A': 20, 'SA': 2 },
-                                    9:  {'NA': 0 , 'A': 14, 'SA': 0 },
-                                    8:  {'NA': 0 , 'A': 0 , 'SA': 0 },
-                                    7:  {'NA': 0 , 'A': 0 , 'SA': 0 }}
+DICTIONNAIRE_POINTS_CARTE_VALEUR = {1:  {'NA': 11, 'A': 11, 'SA': 19, 'TA': 6 },
+                                    10: {'NA': 10, 'A': 10, 'SA': 10, 'TA': 5 },
+                                    13: {'NA': 4 , 'A': 4 , 'SA': 4 , 'TA': 3 },
+                                    12: {'NA': 3 , 'A': 3 , 'SA': 3 , 'TA': 2 },
+                                    11: {'NA': 2 , 'A': 20, 'SA': 2 , 'TA': 13},
+                                    9:  {'NA': 0 , 'A': 14, 'SA': 0 , 'TA': 9 },
+                                    8:  {'NA': 0 , 'A': 0 , 'SA': 0 , 'TA': 0 },
+                                    7:  {'NA': 0 , 'A': 0 , 'SA': 0 , 'TA': 0 }}
 
 for nompng in listdir('Image/Cartes'):
     nom = nompng[:-4]
@@ -68,12 +68,12 @@ for nompng in listdir('Image/Cartes'):
         DICTIONNAIRE_IMAGES_CARTES[nom] = pygame.image.load('Image/Cartes/' + nompng)
 
 IMAGE_CARTE_DOS = pygame.image.load('Image/Cartes/dos-bleu.png')
-DICTIONNAIRE_COULEURS = {'pique': 3, 'coeur': 2, 'trefle': 1, 'carreau': 0, 'SA': -1}
+DICTIONNAIRE_COULEURS = {'pique': 3, 'coeur': 2, 'trefle': 1, 'carreau': 0, 'SA': -1, 'TA': -2}
 PASSE = 'passe'
 
 IMAGES_VIGNETTES = {3: pygame.image.load('Image/pique.png'), 2: pygame.image.load('Image/coeur.png'),
                     1: pygame.image.load('Image/trefle.png'), 0: pygame.image.load('Image/carreau.png'),
-                    -1: pygame.image.load('Image/sa.png')}
+                    -1: pygame.image.load('Image/sa.png'), -2: pygame.image.load('Image/ta.png')}
 LARGEUR_VIGNETTE = IMAGES_VIGNETTES[0].get_width()
 HAUTEUR_VIGNETTE = IMAGES_VIGNETTES[0].get_height()
 

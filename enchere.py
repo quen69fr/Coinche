@@ -67,8 +67,8 @@ class FlechePlusMoins:
 class FenetreEnchere:
     monJoueur = None
 
-    def __init__(self, largeur=500, hauteur=160, x=int(LARGEUR / 2 - 500 / 2), y=int(HAUTEUR / 2 - 160 / 2),
-                 coef_largeur_premiere_partie=0.4, margeBordureVignette=10):
+    def __init__(self, largeur=550, hauteur=160, x=int(LARGEUR / 2 - 500 / 2), y=int(HAUTEUR / 2 - 160 / 2),
+                 coef_largeur_premiere_partie=0.35, margeBordureVignette=10):
         self.x = x
         self.y = y
         self.largeur = largeur
@@ -82,10 +82,10 @@ class FenetreEnchere:
         self.augmentation_possible = True
         largeur_premiere_partie = coef_largeur_premiere_partie * largeur
         mb = margeBordureVignette
-        m = (self.largeur - largeur_premiere_partie - 4 * (LARGEUR_VIGNETTE + 2 * mb)) / 5
+        m = (self.largeur - largeur_premiere_partie - 5 * (LARGEUR_VIGNETTE + 2 * mb)) / 6
         self.vignettes = [Vignette(IMAGES_VIGNETTES[i],
-                                   self.x + largeur_premiere_partie + (i + 1) * m + i * (LARGEUR_VIGNETTE + 2 * mb),
-                                   self.y + m, mb, i) for i in range(-1, 4)]
+                                   self.x + largeur_premiere_partie + (2 - i) * (LARGEUR_VIGNETTE + 2 * mb + m) + m,
+                                   self.y + m, mb, i) for i in range(-2, 4)]
         y2 = self.y + 3 * m + HAUTEUR_VIGNETTE
         self.boutonPasse = Bouton(self.x + m, y2, PASSE, largeur_premiere_partie - m, self.hauteur + self.y - y2 - m,
                                   'Passer')

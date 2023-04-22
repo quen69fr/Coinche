@@ -17,27 +17,37 @@ class Pli:
 
     def trouveJoueurGagnant(self, enchere):
         joueur_carte_gagnante = None
-        for joueur, carte in self.joueur_cartes:
-            if carte.couleur == enchere.couleur:
-                if joueur_carte_gagnante is None or joueur_carte_gagnante[1].nb_pointsA < carte.nb_pointsA \
-                        or (joueur_carte_gagnante[1].nb_pointsA == carte.nb_pointsA and carte.valeur == 8):
+        if enchere.couleur == DICTIONNAIRE_COULEURS["TA"]:
+            for joueur, carte in self.joueur_cartes:
+                if joueur_carte_gagnante is None or (carte.couleur == joueur_carte_gagnante[1].couleur
+                                                     and (joueur_carte_gagnante[1].nb_pointsTA < carte.nb_pointsTA
+                                                          or (joueur_carte_gagnante[1].nb_pointsTA == carte.nb_pointsTA
+                                                              and joueur_carte_gagnante[1].valeur < carte.valeur))):
                     joueur_carte_gagnante = (joueur, carte)
-        if joueur_carte_gagnante is not None:
-            return joueur_carte_gagnante[0]
-        for joueur, carte in self.joueur_cartes:
-            if joueur_carte_gagnante is None or (carte.couleur == joueur_carte_gagnante[1].couleur
-                                                 and (joueur_carte_gagnante[1].nb_points < carte.nb_points
-                                                      or (joueur_carte_gagnante[1].nb_points == carte.nb_points
-                                                          and joueur_carte_gagnante[1].valeur < carte.valeur))):
-                joueur_carte_gagnante = (joueur, carte)
+        else:
+            for joueur, carte in self.joueur_cartes:
+                if carte.couleur == enchere.couleur:
+                    if joueur_carte_gagnante is None or joueur_carte_gagnante[1].nb_pointsA < carte.nb_pointsA \
+                            or (joueur_carte_gagnante[1].nb_pointsA == carte.nb_pointsA and carte.valeur == 8):
+                        joueur_carte_gagnante = (joueur, carte)
+            if joueur_carte_gagnante is not None:
+                return joueur_carte_gagnante[0]
+            for joueur, carte in self.joueur_cartes:
+                if joueur_carte_gagnante is None or (carte.couleur == joueur_carte_gagnante[1].couleur
+                                                     and (joueur_carte_gagnante[1].nb_points < carte.nb_points
+                                                          or (joueur_carte_gagnante[1].nb_points == carte.nb_points
+                                                              and joueur_carte_gagnante[1].valeur < carte.valeur))):
+                    joueur_carte_gagnante = (joueur, carte)
 
         return joueur_carte_gagnante[0]
 
     def calculPoints(self, enchere):
         nb_points = 0
         for _, carte in self.joueur_cartes:
-            if enchere.couleur == -1:
+            if enchere.couleur == DICTIONNAIRE_COULEURS["SA"]:
                 nb_points += carte.nb_pointsSA
+            elif enchere.couleur == DICTIONNAIRE_COULEURS["TA"]:
+                nb_points += carte.nb_pointsTA
             elif carte.couleur == enchere.couleur:
                 nb_points += carte.nb_pointsA
             else:
@@ -62,7 +72,7 @@ class HistoriqueEnchere:
     monPseudo = None
     monCoequipierPseudo = None
 
-    def __init__(self, x=100, y=87, largeur=LARGEUR / 2 - 100 * 2, hauteur=600):
+    def __init__(self, x=150, y=87, largeur=LARGEUR / 2 - 150 * 2, hauteur=600):
         self.bouton = Bouton(LARGEUR / 4, 36, '', 220, 54, 'Historique',
                              couleurRect=BLANC, couleurCountour=NOIR, centrer=True)
         self.x = x
@@ -403,7 +413,7 @@ class MonJoueur:
             return True
         else:
             couleur_jouee = pli.joueur_cartes[0][1].couleur
-            couleur_atout = enchere.couleur
+            couleur_atout = couleur_jouee if enchere.couleur == DICTIONNAIRE_COULEURS["TA"] else enchere.couleur
             couleur_carte = carte.couleur
             plus_gros_atout_joue = None
             for _, c in pli.joueur_cartes:
@@ -432,7 +442,8 @@ class MonJoueur:
                 for c in self.catres:
                     if c.couleur == couleur_jouee:
                         return False
-                if pli.trouveJoueurGagnant(enchere) == self.joueurSuivant.joueurSuivant:
+                if enchere.couleur == DICTIONNAIRE_COULEURS["TA"] or \
+                        pli.trouveJoueurGagnant(enchere) == self.joueurSuivant.joueurSuivant:
                     return True
                 else:
                     if couleur_carte == couleur_atout:
@@ -477,6 +488,7 @@ class Carte:
         self.nb_points = DICTIONNAIRE_POINTS_CARTE_VALEUR[self.valeur]['NA']
         self.nb_pointsA = DICTIONNAIRE_POINTS_CARTE_VALEUR[self.valeur]['A']
         self.nb_pointsSA = DICTIONNAIRE_POINTS_CARTE_VALEUR[self.valeur]['SA']
+        self.nb_pointsTA = DICTIONNAIRE_POINTS_CARTE_VALEUR[self.valeur]['TA']
 
         self.x_centre = 0
         self.y_centre = 0
