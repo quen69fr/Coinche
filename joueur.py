@@ -179,16 +179,24 @@ class Equipe:
             r += pli.calculPoints(enchere)
         return r
 
-    def fin_tour(self, enchere, dis_de_der):
+    def nb_belotes(self, belotes):
+        r = 0
+        for joueur, _ in belotes:
+            if joueur in self.joueurs:
+                r += 1
+        return r
+
+    def fin_tour(self, enchere, dis_de_der, belotes):
         nb = self.calcul_points(enchere, dis_de_der)
-        self.nb_points_fait_derniere_partie = nb
+        nb_belote = self.nb_belotes(belotes)
+        self.nb_points_fait_derniere_partie = nb + 20 * nb_belote
         valeur_enchere = enchere.valeur
         enchere_coincher = enchere.coincher
         suplement = 0
         if (enchere.joueur in self.joueurs and enchere_coincher != 1) or (enchere.joueur not in self.joueurs
                                                                           and enchere_coincher == 1):
             self.nb_points_annonces_derniere_partie = valeur_enchere
-            if nb >= valeur_enchere or (nb == 162 and valeur_enchere == 250):
+            if nb >= max(80, valeur_enchere - 20 * nb_belote) or (nb == 162 and valeur_enchere == 250):
                 suplement += 10 * int((valeur_enchere + 5) / 10)
                 if len(self.plis) == 8:
                     suplement += 250
@@ -196,14 +204,15 @@ class Equipe:
                     suplement += 10 * int((nb + 5) / 10)
         else:
             self.nb_points_annonces_derniere_partie = 0
-            if nb > 162 - valeur_enchere and not (nb == 0 and valeur_enchere == 250):
+            if nb > 162 - max(80, valeur_enchere - 20 * (len(belotes) - nb_belote)) \
+                    and not (nb == 0 and valeur_enchere == 250):
                 suplement += 160
                 suplement += 10 * int((valeur_enchere + 5) / 10)
             else:
                 if enchere_coincher == 0:
                     suplement += (10 * int((nb + 5) / 10))
 
-        self.nombrePoints += suplement * (enchere_coincher + 1)
+        self.nombrePoints += suplement * (enchere_coincher + 1) + 20 * nb_belote
         self.plis = []
 
     def regroupe_cartes(self):
@@ -272,6 +281,7 @@ class AutreJoueur:
         self.y = 80
         self.xt = self.x
         self.yt = self.y - 35
+        self.x_jeton, self.y_jeton = -100, -100
 
     def met_a_jour_hdg(self, hdg):
         self.hdg = hdg
@@ -297,7 +307,7 @@ class AutreJoueur:
 
     def affiche(self, etat_partie, monTour, joueur_dealer):
         if (etat_partie == ETAT_PARTIE_JEU and joueur_dealer == self.joueurSuivant) \
-                or (etat_partie == ETAT_PARTIE_ENCHERE and joueur_dealer == self):
+                or (etat_partie in [ETAT_PARTIE_ENCHERE, ETAT_PARTIE_PREPARATION] and joueur_dealer == self):
             SCREEN.blit(IMAGE_JETON_DEALER, (self.x_jeton, self.y_jeton))
         c = NOIR
         affiche_carte = False
@@ -339,6 +349,19 @@ class AutreJoueur:
                         affiche_texte('Sur-coinché !!', self.x + m - l / 2 + 7 - 116 * mx, self.y + m + 2,
                                       taille=30, couleur=GRIS_FONCE)
 
+    def clic(self, x_souris, y_souris):
+        return (self.xt - LARGEUR_IMAGE_PANNEAU_JOUEUR // 2 <= x_souris <= self.xt + LARGEUR_IMAGE_PANNEAU_JOUEUR // 2
+                and
+                self.yt - HAUTEUR_IMAGE_PANNEAU_JOUEUR // 2 <= y_souris <= self.yt + HAUTEUR_IMAGE_PANNEAU_JOUEUR // 2)
+
+    def afficheBelote(self, rebelote):
+        m = 10
+        l = 162 if rebelote else 128
+        h = HAUTEUR_VIGNETTE + 2 * m
+        afficheBulleRectanle(self.x - l / 2, self.y, l, h, self.hdg)
+        texte = 'Rebelote' if rebelote else 'Belote'
+        affiche_texte(texte, self.x + m - l / 2 + 7, self.y + m + 2, taille=30, couleur=GRIS_FONCE)
+
 
 # ==========================================================
 class MonJoueur:
@@ -348,12 +371,12 @@ class MonJoueur:
         self.joueurSuivant = None
         self.derniereEnchere = None
         self.clignotte = 0
+        self.boutonCarteBelote = None
 
     def affiche(self, etat_partie, monTour, joueur_dealer):
         if (etat_partie == ETAT_PARTIE_JEU and joueur_dealer == self.joueurSuivant) \
-                or (etat_partie == ETAT_PARTIE_ENCHERE and joueur_dealer == self):
+                or (etat_partie in [ETAT_PARTIE_ENCHERE, ETAT_PARTIE_PREPARATION] and joueur_dealer == self):
             SCREEN.blit(IMAGE_JETON_DEALER, (463, 436))
-        self.affiche_cartes()
         c = NOIR
         affiche_carte = False
         image = IMAGE_PANNEAU_JOUEUR
@@ -370,6 +393,7 @@ class MonJoueur:
         if affiche_carte:
             SCREEN.blit(IMAGE_JOUEUR_TOUR, (LARGEUR / 2 - LARGEUR_IMAGE_PANNEAU_JOUEUR / 2 + 198,
                                             480 - HAUTEUR_IMAGE_PANNEAU_JOUEUR / 2 + 33))
+        self.affiche_cartes()
 
     def affiche_cartes(self, x=LARGEUR / 2, y=800 + HAUTEUR - 80, angle_total=40, angle_min=8, rayon=800):
         nb_cartes = len(self.catres)
@@ -382,7 +406,14 @@ class MonJoueur:
             a = (((nb_cartes - i - 1) + 0.5 - nb_cartes / 2) * angle_entre_cartes)
             self.catres[i].affiche(x, y, a, rayon)
 
+        if self.boutonCarteBelote is not None:
+            self.boutonCarteBelote.parametre.affichePanneauBelote()
+            self.boutonCarteBelote.affiche()
+
     def clic_sur_cartes(self, x_souris, y_souris):
+        if self.boutonCarteBelote is not None and self.boutonCarteBelote.clic(x_souris, y_souris):
+            self.boutonCarteBelote.selectionner = True
+            return self.boutonCarteBelote.parametre
         r = None
         l = self.catres[:]
         l.reverse()
@@ -473,6 +504,23 @@ class MonJoueur:
             if carte.nom == nom:
                 return carte
 
+    def nb_carte_belote(self, couleur):
+        n = 0
+        for carte in self.catres:
+            if carte.belote(couleur):
+                n += 1
+        return n
+
+    def afficheBelote(self, rebelote):
+        m = 10
+        l = 162 if rebelote else 128
+        h = HAUTEUR_VIGNETTE + 2 * m
+        x = (LARGEUR + LARGEUR_IMAGE_PANNEAU_JOUEUR + l) // 2 + 16
+        y = 480 - h // 2 - 3
+        afficheBulleRectanle(x - l / 2, y, l, h, 'g')
+        texte = 'Rebelote' if rebelote else 'Belote'
+        affiche_texte(texte, x + m - l / 2 + 7, y + m + 2, taille=30, couleur=GRIS_FONCE)
+
 
 # ==========================================================
 class Carte:
@@ -500,6 +548,10 @@ class Carte:
         self.hauteur_image = 0
 
     # ----------------------------------------------------
+    def belote(self, couleur):
+        return self.valeur in [12, 13] and (couleur is None or self.couleur == couleur)
+
+    # ----------------------------------------------------
     def affiche(self, x, y, angle, rayon):
         self.angle = angle
         self.a_rad = self.angle * math.pi / 180
@@ -517,6 +569,24 @@ class Carte:
         self.y_image = int(self.y_centre - self.hauteur_image / 2)
 
         SCREEN.blit(image_tournee, (self.x_image, self.y_image))
+
+    def affichePanneauBelote(self):
+        x = self.x_centre - math.sin(self.a_rad) * 105
+        y = self.y_centre - math.cos(self.a_rad) * 105
+        l, h = 150, 65
+        m = 15
+        x -= l / 2 + m
+        y -= h + m
+        afficheBulleRectanle(x, y, l + 2 * m, h + m - 2, 'b')
+
+    def boutonBelote(self):
+        x = self.x_centre - math.sin(self.a_rad) * 105
+        y = self.y_centre - math.cos(self.a_rad) * 105
+        l, h = 150, 65
+        m = 15
+        x -= l / 2 + m
+        y -= h + m
+        return Bouton(x + m, y + m, self, l, h - m, 'Belote')
 
     # ----------------------------------------------------
     def clic(self, x_souris, y_souris):

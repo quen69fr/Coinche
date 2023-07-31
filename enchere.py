@@ -66,8 +66,10 @@ class FlechePlusMoins:
 # ==========================================================
 class FenetreEnchere:
     monJoueur = None
+    enchere_cran = 5
+    valeur_max = 160
 
-    def __init__(self, largeur=550, hauteur=160, x=int(LARGEUR / 2 - 500 / 2), y=int(HAUTEUR / 2 - 160 / 2),
+    def __init__(self, largeur=550, hauteur=160, x=int(LARGEUR / 2 - 550 / 2), y=int(HAUTEUR / 2 - 160 / 2),
                  coef_largeur_premiere_partie=0.35, margeBordureVignette=10):
         self.x = x
         self.y = y
@@ -181,17 +183,17 @@ class FenetreEnchere:
         if self.augmentation_possible and not self.sur_coinche_possible:
             r = self.flechePlusMoins.clic(x_souris, y_souris)
             if r == 1:
-                if self.valeur < 200:
-                    if self.valeur == 155:
+                if self.valeur < 250:
+                    if self.valeur == FenetreEnchere.valeur_max:
                         self.valeur = 250
                     else:
-                        self.valeur += ENCHERE_CRAN
+                        self.valeur += FenetreEnchere.enchere_cran
             elif r == -1:
                 if self.valeur > self.valeur_min:
                     if self.valeur == 250:
-                        self.valeur = 155
+                        self.valeur = FenetreEnchere.valeur_max
                     else:
-                        self.valeur -= ENCHERE_CRAN
+                        self.valeur -= FenetreEnchere.enchere_cran
 
             for vignette in self.vignettes:
                 if vignette.clic(x_souris, y_souris):
@@ -220,7 +222,7 @@ class FenetreEnchere:
             if enchere.valeur == 250:
                 self.augmentation_possible = False
             else:
-                self.valeur_min = enchere.valeur + ENCHERE_CRAN
+                self.valeur_min = enchere.valeur + FenetreEnchere.enchere_cran
                 self.valeur = self.valeur_min
             if enchere.joueur not in monEquipe.joueurs:
                 if enchere.coincher == 0:

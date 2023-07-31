@@ -68,9 +68,22 @@ class ReseauClient:
     def envoieMessage(self, message):
         self.envoie_au_serveur(EVT_MESSAGE, {PARAM_PSEUDO: self.pseudoJoueur, PARAM_MSG: message})
 
-    def envoieCarte(self, nomCarte):
-        self.envoie_au_serveur(EVT_PLAY, {PARAM_PSEUDO: self.pseudoJoueur, PARAM_CARTE: nomCarte})
+    def envoieCarte(self, nomCarte, belote):
+        self.envoie_au_serveur(EVT_PLAY, {PARAM_PSEUDO: self.pseudoJoueur, PARAM_CARTE: nomCarte,
+                                          PARAM_BELOTE: 1 if belote else 0})
 
     def envoieEnchere(self, valeur, couleur=None, coinche=None):
         self.envoie_au_serveur(EVT_BET, {PARAM_PSEUDO: self.pseudoJoueur, PARAM_VALEUR: valeur,
                                          PARAM_COULEUR: couleur, PARAM_COINCHE: coinche})
+
+    def envoieBelotte(self):
+        self.envoie_au_serveur(EVT_BELOTE, {PARAM_PSEUDO: self.pseudoJoueur})
+
+    def envoie10en10(self):
+        self.envoie_au_serveur(EVT_10_EN_10, {PARAM_PSEUDO: self.pseudoJoueur})
+
+    def envoiePremierJoueur(self):
+        self.envoie_au_serveur(EVT_PREMIER_JOUEUR, {PARAM_PSEUDO: self.pseudoJoueur})
+
+    def envoieStart(self):
+        self.envoie_au_serveur(EVT_START, {PARAM_PSEUDO: self.pseudoJoueur})

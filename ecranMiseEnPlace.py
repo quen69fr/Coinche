@@ -6,9 +6,8 @@ from outils import *
 
 ETAT_IP = 0
 ETAT_PSEUDO = 1
-ETAT_COEQUIPIER = 2
-ETAT_ATTENTE = 3
-ETAT_FIN = 4
+ETAT_ATTENTE_JOUEURS = 2
+ETAT_FIN = 3
 
 
 class EcranMiseEnPlace:
@@ -46,21 +45,12 @@ class EcranMiseEnPlace:
             if self.message != '':
                 self.validee = True
 
-    def affichePseudo(self, x, y, pseudo, selectionne):
+    def affichePseudo(self, x, y, pseudo):
         image = IMAGE_PANNEAU_JOUEUR
-        if selectionne:
-            image = IMAGE_PANNEAU_JOUEUR_SELECTIONNE
         SCREEN.blit(image, (x - LARGEUR_IMAGE_PANNEAU_JOUEUR / 2, y - HAUTEUR_IMAGE_PANNEAU_JOUEUR / 2))
         affiche_texte(pseudo.upper(), x, y, centrer=True)
 
-    def clicPseudo(self, x_souris, y_souris):
-        if abs(self.yPseudo - y_souris) <= HAUTEUR_IMAGE_PANNEAU_JOUEUR / 2:
-            for i, pseudo in enumerate(self.listePseudoAGerer):
-                if abs(x_souris - LARGEUR / 2 - (i - 1) * 300) <= LARGEUR_IMAGE_PANNEAU_JOUEUR / 2:
-                    return pseudo
-        return None
-
-    def affiche(self, monCoequipierPseudo):
+    def affiche(self):
         t = None
         if self.etat == ETAT_IP:
             t = 'Adresse ip'
@@ -71,8 +61,7 @@ class EcranMiseEnPlace:
                 pseudo = ' '
                 if len(self.listePseudoAGerer) >= i + 1:
                     pseudo = self.listePseudoAGerer[i]
-                self.affichePseudo(LARGEUR / 2 + (i - 1) * self.delta_xPseudo, self.yPseudo, pseudo,
-                                   monCoequipierPseudo == pseudo)
+                self.affichePseudo(LARGEUR / 2 + (i - 1) * self.delta_xPseudo, self.yPseudo, pseudo)
         if t is not None:
             pygame.draw.rect(SCREEN, BLANC, (self.x, self.y, self.largeur, self.hauteur))
             pygame.draw.rect(SCREEN, NOIR, (self.x, self.y, self.largeur, self.hauteur), 3)

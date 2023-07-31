@@ -1,12 +1,12 @@
 # coding: utf-8
 
 from reseauMessage import *
+from ecranPreparation import *
 from ecranMiseEnPlace import *
 from messages import *
 from joueur import *
 from enchere import *
 from outils import *
-
 
 if __name__ == "__main__":
     etat_partie = ETAT_PARTIE_MISE_EN_PLACE
@@ -14,10 +14,8 @@ if __name__ == "__main__":
     reseau.port = '12800'
 
     monPseudo = ''
-    monCoequipierPseudo = ''
-    monAdversaireGauchePseudo = ''
-    monAdversaireDroitePseudo = ''
-    joueurCommencePseudo = ''
+    playWithBelote = False
+    play10en10 = False
     random_liste_carte = []
     dictionnaire_joueur = {}
     monJoueur = MonJoueur
@@ -26,6 +24,7 @@ if __name__ == "__main__":
     equipeAdverse = Equipe
     paquetCartes = []
     ecran_mise_en_place = EcranMiseEnPlace()
+    ecran_preparation = EcranPreparation()
 
     action_possible = True
     affichage = True
@@ -34,6 +33,8 @@ if __name__ == "__main__":
     joueurTour = None
     joueurPremier = None
     joueurSuivant = False
+    belotesTour = []
+    belotes = []
     distribution = False
     encheres = []
     fenetre_enchere = FenetreEnchere()
@@ -102,7 +103,7 @@ if __name__ == "__main__":
                     dictionnaire_joueur[monPseudo] = monJoueur
                     reseau.login(monPseudo)
                     ecran_mise_en_place.etat_suivant()
-            else:
+            elif ecran_mise_en_place.etat == ETAT_ATTENTE_JOUEURS:
                 evt = reseau.regardeEvenementsNonFait()
                 if evt is not None:
                     if evt[EVENT_TYPE] == EVT_DEAL:
@@ -116,58 +117,83 @@ if __name__ == "__main__":
                             if p not in ecran_mise_en_place.listePseudoAGerer:
                                 dictionnaire_joueur[p] = AutreJoueur(p)
                                 ecran_mise_en_place.listePseudoAGerer.append(p)
-                    elif evt[EVENT_TYPE] == EVT_TEAM:
-                        if evt[EVENT_PSEUDO] == monPseudo:
-                            monCoequipierPseudo = evt[EVENT_CONTENU]
-                        elif evt[EVENT_CONTENU] == monPseudo:
-                            monCoequipierPseudo = evt[EVENT_PSEUDO]
-                        else:
-                            monAdversaireGauchePseudo = evt[EVENT_PSEUDO]
-                            monAdversaireDroitePseudo = evt[EVENT_CONTENU]
-
-                if ecran_mise_en_place.etat == ETAT_COEQUIPIER:
-                    if clic_gauche:
-                        r = ecran_mise_en_place.clicPseudo(x_souris, y_souris)
-                        if r is not None and r != monAdversaireGauchePseudo and r != monAdversaireDroitePseudo:
-                            if reseau.team(r):
-                                monCoequipierPseudo = r
-                    if monCoequipierPseudo != '':
-                        ecran_mise_en_place.etat_suivant()
-                if ecran_mise_en_place.etat == ETAT_ATTENTE:
-                    if monAdversaireGauchePseudo != '':
-                        ecran_mise_en_place.etat_suivant()
-                if ecran_mise_en_place.etat == ETAT_FIN:
-                    listeJoueurOrdreTour = reseau.playerList()
-                    etat_partie = ETAT_PARTIE_PREPARATION
+                        if len(ecran_mise_en_place.listePseudoAGerer) == 3:
+                            listeJoueurOrdreTour = sorted(ecran_mise_en_place.listePseudoAGerer + [monPseudo])
+                            ecran_preparation.listeJoueurOrdreTour = listeJoueurOrdreTour
+                            etat_partie = ETAT_PARTIE_PREPARATION
 
         elif etat_partie == ETAT_PARTIE_PREPARATION:
-            Messages.monPseudo = monPseudo
-            Messages.monCoequipierPseudo = monCoequipierPseudo
-            HistoriqueEnchere.monPseudo = monPseudo
-            HistoriqueEnchere.monCoequipierPseudo = monCoequipierPseudo
+            start = False
+            evt = reseau.regardeEvenementsNonFait()
+            if evt is not None:
+                if evt[EVENT_TYPE] == EVT_TEAM:
+                    ecran_preparation.evenement_team(evt[EVENT_PSEUDO], evt[EVENT_CONTENU])
+                elif evt[EVENT_TYPE] == EVT_BELOTE:
+                    playWithBelote = not playWithBelote
+                elif evt[EVENT_TYPE] == EVT_PREMIER_JOUEUR:
+                    ecran_preparation.evenement_premier_joueur()
+                elif evt[EVENT_TYPE] == EVT_10_EN_10:
+                    play10en10 = not play10en10
+                elif evt[EVENT_TYPE] == EVT_START:
+                    start = True
+
+            if clic_gauche:
+                if ecran_preparation.clic_premier_joueur(x_souris, y_souris):
+                    reseau.envoiePremierJoueur()
+                    ecran_preparation.evenement_premier_joueur()
+                elif ecran_preparation.clic_start(x_souris, y_souris):
+                    reseau.envoieStart()
+                    start = True
+                elif ecran_preparation.clic_belote(x_souris, y_souris):
+                    reseau.envoieBelotte()
+                    playWithBelote = not playWithBelote
+                elif ecran_preparation.clic_10_en_10(x_souris, y_souris):
+                    reseau.envoie10en10()
+                    play10en10 = not play10en10
+                else:
+                    for pseudo in listeJoueurOrdreTour:
+                        if pseudo == monPseudo:
+                            continue
+                        if dictionnaire_joueur[pseudo].clic(x_souris, y_souris):
+                            reseau.team(pseudo)
+                            ecran_preparation.evenement_team(monPseudo, pseudo)
+
             joueurCommencePseudo = listeJoueurOrdreTour[0]
+
             i = listeJoueurOrdreTour.index(monPseudo)
             monAdversaireDroitePseudo = listeJoueurOrdreTour[i - 1]
             monAdversaireGauchePseudo = listeJoueurOrdreTour[i - 3]
+            monCoequipierPseudo = listeJoueurOrdreTour[i - 2]
             monCoequipier = dictionnaire_joueur[monCoequipierPseudo]
-            monEquipe = Equipe([monJoueur, monCoequipier])
-            equipeAdverse = Equipe([dictionnaire_joueur[monAdversaireGauchePseudo],
-                                    dictionnaire_joueur[monAdversaireDroitePseudo]])
-
-            monJoueur.joueurSuivant = equipeAdverse.joueurs[0]
-            equipeAdverse.joueurs[0].joueurSuivant = monCoequipier
-            monCoequipier.joueurSuivant = equipeAdverse.joueurs[1]
-            equipeAdverse.joueurs[1].joueurSuivant = monJoueur
-
-            equipeAdverse.joueurs[0].met_a_jour_hdg('g')
+            dictionnaire_joueur[monAdversaireGauchePseudo].met_a_jour_hdg('g')
             monCoequipier.met_a_jour_hdg('h')
-            equipeAdverse.joueurs[1].met_a_jour_hdg('d')
-            FenetreEnchere.monJoueur = monJoueur
-            joueurDistribution = dictionnaire_joueur[joueurCommencePseudo]
-            paquetCartes = [Carte(LISTE_NOMS_CARTES[n]) for n in random_liste_carte]
+            dictionnaire_joueur[monAdversaireDroitePseudo].met_a_jour_hdg('d')
 
-            etat_partie = ETAT_PARTIE_ENCHERE
-            distribution = True
+            if start:
+                Messages.monPseudo = monPseudo
+                Messages.monCoequipierPseudo = monCoequipierPseudo
+                HistoriqueEnchere.monPseudo = monPseudo
+                HistoriqueEnchere.monCoequipierPseudo = monCoequipierPseudo
+                monEquipe = Equipe([monJoueur, monCoequipier])
+                equipeAdverse = Equipe([dictionnaire_joueur[monAdversaireGauchePseudo],
+                                        dictionnaire_joueur[monAdversaireDroitePseudo]])
+
+                monJoueur.joueurSuivant = equipeAdverse.joueurs[0]
+                equipeAdverse.joueurs[0].joueurSuivant = monCoequipier
+                monCoequipier.joueurSuivant = equipeAdverse.joueurs[1]
+                equipeAdverse.joueurs[1].joueurSuivant = monJoueur
+
+                FenetreEnchere.monJoueur = monJoueur
+                joueurDistribution = dictionnaire_joueur[joueurCommencePseudo]
+                paquetCartes = [Carte(LISTE_NOMS_CARTES[n]) for n in random_liste_carte]
+
+                if play10en10:
+                    FenetreEnchere.enchere_cran = 10
+                if playWithBelote:
+                    FenetreEnchere.valeur_max = 200
+
+                etat_partie = ETAT_PARTIE_ENCHERE
+                distribution = True
 
         # ------------------------------ Gestion de la partie ------------------------------
         elif gelEcranCompteur == 0:
@@ -190,11 +216,13 @@ if __name__ == "__main__":
 
                     elif evt[EVENT_TYPE] == EVT_PLAY:
                         joueur_evenement = dictionnaire_joueur[evt[EVENT_PSEUDO]]
-                        nouvelleCarte = evt[EVENT_CONTENU]
+                        nouvelleCarte, belote = evt[EVENT_CONTENU]
                         pli.ajouteCarte(nouvelleCarte, joueur_evenement)
                         if joueur_evenement == monJoueur:
                             monJoueur.catres.remove(monJoueur.trouve_carte_nom(nouvelleCarte))
                         joueurSuivant = True
+                        if int(belote) == 1:
+                            belotesTour.append((joueur_evenement, pli.joueur_cartes[-1][1].couleur))
                         if len(pli.joueur_cartes) >= 4 and len(reseau.evenementsNonFait) == 0:
                             gelEcranCompteur = -1
                             continue
@@ -242,13 +270,32 @@ if __name__ == "__main__":
                             r = monJoueur.clic_sur_cartes(x_souris, y_souris)
                             if r is not None:
                                 if monJoueur.carte_possible_pour_pli(r, pli, encheres[-1]):
-                                    pli.ajouteCarte(r, monJoueur)
-                                    monJoueur.catres.remove(r)
-                                    reseau.envoieCarte(r.nom)
-                                    joueurSuivant = True
-                                    if len(pli.joueur_cartes) >= 4:
-                                        gelEcranCompteur = -1
-                                        continue
+                                    belote = False
+                                    if playWithBelote:
+                                        c = r.couleur if encheres[-1].couleur == DICTIONNAIRE_COULEURS['TA'] else \
+                                            encheres[-1].couleur
+                                        if r.belote(c):
+                                            if (monJoueur, c) in belotes:
+                                                belote = True
+                                            elif monJoueur.nb_carte_belote(c) == 2:
+                                                if monJoueur.boutonCarteBelote is None or \
+                                                        not monJoueur.boutonCarteBelote.parametre == r:
+                                                    monJoueur.boutonCarteBelote = r.boutonBelote()
+                                                    r = None
+                                                elif monJoueur.boutonCarteBelote.selectionner:
+                                                    belote = True
+                                    if r is not None:
+                                        pli.ajouteCarte(r, monJoueur)
+                                        monJoueur.catres.remove(r)
+                                        monJoueur.boutonCarteBelote = None
+                                        monJoueur.boutonCarteBelote = None
+                                        reseau.envoieCarte(r.nom, belote)
+                                        joueurSuivant = True
+                                        if belote:
+                                            belotesTour.append((monJoueur, pli.joueur_cartes[-1][1].couleur))
+                                        if len(pli.joueur_cartes) >= 4:
+                                            gelEcranCompteur = -1
+                                            continue
 
             while distribution or joueurSuivant:
                 if distribution:
@@ -271,6 +318,7 @@ if __name__ == "__main__":
                     joueurTour = joueurPremier
                     etat_partie = ETAT_PARTIE_ENCHERE
                     encheres = []
+                    belotes = []
                     fenetre_enchere.nouvelle_enchere(encheres[-1] if len(encheres) > 0 else None, monEquipe,
                                                      joueurTour == monJoueur)
 
@@ -304,6 +352,10 @@ if __name__ == "__main__":
                             else:
                                 equipeAdverse.plis.append(pli)
                             pli = Pli()
+                            for x in belotesTour:
+                                if x not in belotes:
+                                    belotes.append(x)
+                            belotesTour = []
                             if len(monJoueur.catres) == 0:
                                 distribution = True
                                 paquetCartes = []
@@ -312,8 +364,8 @@ if __name__ == "__main__":
                                 else:
                                     paquetCartes = equipeAdverse.regroupe_cartes() + monEquipe.regroupe_cartes()
                                 paquetCartes = paquetCartes[15:len(paquetCartes)] + paquetCartes[0:15]
-                                monEquipe.fin_tour(encheres[-1], joueurGangnant in monEquipe.joueurs)
-                                equipeAdverse.fin_tour(encheres[-1], joueurGangnant in equipeAdverse.joueurs)
+                                monEquipe.fin_tour(encheres[-1], joueurGangnant in monEquipe.joueurs, belotes)
+                                equipeAdverse.fin_tour(encheres[-1], joueurGangnant in equipeAdverse.joueurs, belotes)
                             else:
                                 joueurPremier = joueurGangnant
                                 joueurTour = joueurPremier
@@ -328,27 +380,32 @@ if __name__ == "__main__":
                 if not e.gere_clic(x_souris, y_souris) and not e.boutonPli.selectionner:
                     if gelEcranCompteur < 0:
                         gelEcranCompteur = 0
-        
+
         # ----------------------------------- Affichage ------------------------------------
         if affichage:
             SCREEN.blit(IMAGE_FOND, (0, 0))
             SCREEN.blit(IMAGE_QUITTER_BOUTON, (X_IMAGE_QUITTER_BOUTON, Y_IMAGE_QUITTER_BOUTON))
-            if etat_partie == ETAT_PARTIE_MISE_EN_PLACE or etat_partie == ETAT_PARTIE_PREPARATION:
-                ecran_mise_en_place.affiche(monCoequipierPseudo)
+            if etat_partie == ETAT_PARTIE_MISE_EN_PLACE:
+                ecran_mise_en_place.affiche()
                 if monPseudo != '':
                     monJoueur.affiche(etat_partie, True, None)
+            elif etat_partie == ETAT_PARTIE_PREPARATION:
+                ecran_preparation.affiche(playWithBelote, play10en10)
+                for pseudo in listeJoueurOrdreTour:
+                    dictionnaire_joueur[pseudo].affiche(etat_partie, False,
+                                                        dictionnaire_joueur[listeJoueurOrdreTour[0]])
             else:
                 SCREEN.blit(IMAGE_SAUVEGARE_BOUTON, (X_IMAGE_SAUVEGARE_BOUTON, Y_IMAGE_SAUVEGARE_BOUTON))
                 for joueur in dictionnaire_joueur.values():
-                    if joueur == monJoueur:
-                        joueur.affiche(etat_partie, joueurTour == monJoueur, joueurDistribution)
-                    else:
-                        joueur.affiche(etat_partie, joueurTour == joueur, joueurDistribution)
+                    joueur.affiche(etat_partie, joueurTour == joueur, joueurDistribution)
                 pli.affiche()
                 monEquipe.affiche(encheres[-1] if len(encheres) > 0 else None)
                 equipeAdverse.affiche(encheres[-1] if len(encheres) > 0 else None)
                 if etat_partie == ETAT_PARTIE_ENCHERE:
                     fenetre_enchere.affiche()
+                elif etat_partie == ETAT_PARTIE_JEU:
+                    for joueur, couleur in belotesTour:
+                        joueur.afficheBelote((joueur, belotesTour) in belotes)
                 messages.affiche()
                 historiqueEnchere.affiche(encheres)
 

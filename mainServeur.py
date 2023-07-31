@@ -26,17 +26,11 @@ class Evenement():
         return {EVENT_ID: self.id, EVENT_PSEUDO: self.pseudo, EVENT_TYPE: self.type, EVENT_CONTENU: self.contenu}
 
 
-liste_pseudos_joueurs = []
 liste_events = []
-liste_joueurs_team = []
-listeJoueursClasses = []
 
 if MODE_SAUVEGARDE:
     with open(FICHIER_SAUVEGARDE, 'r') as fichier:
         dic_sauvegarde = json.load(fichier)
-        liste_pseudos_joueurs = dic_sauvegarde['liste_pseudos_joueurs']
-        liste_joueurs_team = dic_sauvegarde['liste_joueurs_team']
-        listeJoueursClasses = dic_sauvegarde['listeJoueursClasses']
         if len(dic_sauvegarde['events']) > 0:
             for dic_event in dic_sauvegarde['events']:
                 event = Evenement(None, None, None)
@@ -47,10 +41,7 @@ if MODE_SAUVEGARDE:
 
 @app.route(f'/coinche/{EVT_SAUVEGARDE}')
 def sauvegarde():
-    dic = {'liste_pseudos_joueurs': liste_pseudos_joueurs,
-           'liste_joueurs_team': liste_joueurs_team,
-           'listeJoueursClasses': listeJoueursClasses,
-           'events': [event.__dict__ for event in liste_events]}
+    dic = {'events': [event.__dict__ for event in liste_events]}
     with open(FICHIER_SAUVEGARDE, "w") as fichier:
         json.dump(dic, fichier)
     return str(1)
@@ -59,11 +50,6 @@ def sauvegarde():
 @app.route(f'/coinche/{EVT_LOGIN}')
 def login():
     pseudo = request.args.get(PARAM_PSEUDO)
-    # print(pseudo)
-    if len(liste_pseudos_joueurs) > 3:
-        return str(0)
-    if pseudo not in liste_pseudos_joueurs:
-        liste_pseudos_joueurs.append(pseudo)
     liste_events.append(Evenement(pseudo, EVT_LOGIN))
     return str(1)
 
@@ -73,15 +59,40 @@ def team():
     pseudo = request.args.get(PARAM_PSEUDO)
     pseudo2 = request.args.get(PARAM_PSEUDO2)
     # print(f'pseudo : {pseudo}, pseudo2 : {pseudo2}')
-    if pseudo in liste_pseudos_joueurs and pseudo2 in liste_pseudos_joueurs:
-        l = []
-        for team in liste_joueurs_team:
-            l.extend(team)
-        if pseudo not in l and pseudo2 not in l:
-            liste_joueurs_team.append([pseudo, pseudo2])
-            liste_events.append(Evenement(pseudo, EVT_TEAM, pseudo2))
-            return str(1)
+    liste_events.append(Evenement(pseudo, EVT_TEAM, pseudo2))
     return str(0)
+
+
+@app.route(f'/coinche/{EVT_BELOTE}')
+def belote():
+    pseudo = request.args.get(PARAM_PSEUDO)
+    # print(f'pseudo : {pseudo}, msg : {msg}')
+    liste_events.append(Evenement(pseudo, EVT_BELOTE))
+    return str(1)
+
+
+@app.route(f'/coinche/{EVT_PREMIER_JOUEUR}')
+def premier_joueur():
+    pseudo = request.args.get(PARAM_PSEUDO)
+    # print(f'pseudo : {pseudo}, msg : {msg}')
+    liste_events.append(Evenement(pseudo, EVT_PREMIER_JOUEUR))
+    return str(1)
+
+
+@app.route(f'/coinche/{EVT_START}')
+def start():
+    pseudo = request.args.get(PARAM_PSEUDO)
+    # print(f'pseudo : {pseudo}, msg : {msg}')
+    liste_events.append(Evenement(pseudo, EVT_START))
+    return str(1)
+
+
+@app.route(f'/coinche/{EVT_10_EN_10}')
+def e10_en_10():
+    pseudo = request.args.get(PARAM_PSEUDO)
+    # print(f'pseudo : {pseudo}, msg : {msg}')
+    liste_events.append(Evenement(pseudo, EVT_10_EN_10))
+    return str(1)
 
 
 @app.route(f'/coinche/{EVT_BET}')
@@ -91,7 +102,8 @@ def bet():
     couleur = request.args.get(PARAM_COULEUR)
     coinche = request.args.get(PARAM_COINCHE)
     # print(f'pseudo : {pseudo}, valeur : {valeur}, couleur : {couleur}, coinche : {coinche}')
-    liste_events.append(Evenement(pseudo, EVT_BET, {PARAM_VALEUR: valeur, PARAM_COULEUR: couleur, PARAM_COINCHE: coinche}))
+    liste_events.append(
+        Evenement(pseudo, EVT_BET, {PARAM_VALEUR: valeur, PARAM_COULEUR: couleur, PARAM_COINCHE: coinche}))
     return str(1)
 
 
@@ -99,9 +111,11 @@ def bet():
 def play():
     pseudo = request.args.get(PARAM_PSEUDO)
     carte = request.args.get(PARAM_CARTE)
+    belote_ = request.args.get(PARAM_BELOTE)
     # print(f'pseudo : {pseudo}, carte : {carte}')
-    liste_events.append(Evenement(pseudo, EVT_PLAY, carte))
+    liste_events.append(Evenement(pseudo, EVT_PLAY, [carte, belote_]))
     return str(1)
+
 
 @app.route(f'/coinche/{EVT_MESSAGE}')
 def message():
@@ -110,17 +124,6 @@ def message():
     # print(f'pseudo : {pseudo}, msg : {msg}')
     liste_events.append(Evenement(pseudo, EVT_MESSAGE, msg))
     return str(1)
-
-@app.route(f'/coinche/{PLAYER_LIST}')
-def playerList():
-    if len(listeJoueursClasses) == 0 and len(liste_joueurs_team) == 2:
-        random.shuffle(liste_joueurs_team)
-        random.shuffle(liste_joueurs_team[0])
-        random.shuffle(liste_joueurs_team[1])
-        listeJoueursClasses.extend([liste_joueurs_team[0][0], liste_joueurs_team[1][0],
-                                    liste_joueurs_team[0][1], liste_joueurs_team[1][1]])
-        # print(f'listeJoueurs : {listeJoueursClasses}')
-    return jsonify(listeJoueursClasses)
 
 
 @app.route(f'/coinche/{EVENT}')
