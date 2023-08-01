@@ -11,7 +11,6 @@ from outils import *
 if __name__ == "__main__":
     etat_partie = ETAT_PARTIE_MISE_EN_PLACE
     reseau = ReseauClient()
-    reseau.port = '12800'
 
     monPseudo = ''
     playWithBelote = False
@@ -28,6 +27,7 @@ if __name__ == "__main__":
 
     action_possible = True
     affichage = True
+    listePseudoOrdreTour = []
     listeJoueurOrdreTour = []
     joueurDistribution = None
     joueurTour = None
@@ -118,8 +118,8 @@ if __name__ == "__main__":
                                 dictionnaire_joueur[p] = AutreJoueur(p)
                                 ecran_mise_en_place.listePseudoAGerer.append(p)
                         if len(ecran_mise_en_place.listePseudoAGerer) == 3:
-                            listeJoueurOrdreTour = sorted(ecran_mise_en_place.listePseudoAGerer + [monPseudo])
-                            ecran_preparation.listeJoueurOrdreTour = listeJoueurOrdreTour
+                            listePseudoOrdreTour = sorted(ecran_mise_en_place.listePseudoAGerer + [monPseudo])
+                            ecran_preparation.listeJoueurOrdreTour = listePseudoOrdreTour
                             etat_partie = ETAT_PARTIE_PREPARATION
 
         elif etat_partie == ETAT_PARTIE_PREPARATION:
@@ -151,19 +151,19 @@ if __name__ == "__main__":
                     reseau.envoie10en10()
                     play10en10 = not play10en10
                 else:
-                    for pseudo in listeJoueurOrdreTour:
+                    for pseudo in listePseudoOrdreTour:
                         if pseudo == monPseudo:
                             continue
                         if dictionnaire_joueur[pseudo].clic(x_souris, y_souris):
                             reseau.team(pseudo)
                             ecran_preparation.evenement_team(monPseudo, pseudo)
 
-            joueurCommencePseudo = listeJoueurOrdreTour[0]
+            joueurCommencePseudo = listePseudoOrdreTour[0]
 
-            i = listeJoueurOrdreTour.index(monPseudo)
-            monAdversaireDroitePseudo = listeJoueurOrdreTour[i - 1]
-            monAdversaireGauchePseudo = listeJoueurOrdreTour[i - 3]
-            monCoequipierPseudo = listeJoueurOrdreTour[i - 2]
+            i = listePseudoOrdreTour.index(monPseudo)
+            monAdversaireDroitePseudo = listePseudoOrdreTour[i - 1]
+            monAdversaireGauchePseudo = listePseudoOrdreTour[i - 3]
+            monCoequipierPseudo = listePseudoOrdreTour[i - 2]
             monCoequipier = dictionnaire_joueur[monCoequipierPseudo]
             dictionnaire_joueur[monAdversaireGauchePseudo].met_a_jour_hdg('g')
             monCoequipier.met_a_jour_hdg('h')
@@ -239,6 +239,18 @@ if __name__ == "__main__":
                     if X_IMAGE_SAUVEGARE_BOUTON < x_souris < X_IMAGE_SAUVEGARE_BOUTON + LARGEUR_IMAGE_BOUTON \
                             and Y_IMAGE_SAUVEGARE_BOUTON < y_souris < (Y_IMAGE_SAUVEGARE_BOUTON + HAUTEUR_IMAGE_BOUTON):
                         reseau.sauvegarde()
+                    elif X_IMAGE_RELOAD_BOUTON < x_souris < X_IMAGE_RELOAD_BOUTON + LARGEUR_IMAGE_BOUTON \
+                            and Y_IMAGE_RELOAD_BOUTON < y_souris < (Y_IMAGE_RELOAD_BOUTON + HAUTEUR_IMAGE_BOUTON):
+                        etat_partie = ETAT_PARTIE_PREPARATION
+                        playWithBelote = False
+                        play10en10 = False
+                        reseau.id_actuelle = 0
+                        listePseudoOrdreTour = sorted(listePseudoOrdreTour)
+                        ecran_preparation.listeJoueurOrdreTour = listePseudoOrdreTour
+                        continue
+                    elif X_IMAGE_TAKE_BACK_BOUTON < x_souris < X_IMAGE_TAKE_BACK_BOUTON + LARGEUR_IMAGE_BOUTON \
+                            and Y_IMAGE_TAKE_BACK_BOUTON < y_souris < (Y_IMAGE_TAKE_BACK_BOUTON + HAUTEUR_IMAGE_BOUTON):
+                        reseau.take_back()
                     else:
                         r = messages.gere_clic(x_souris, y_souris)
                         if r is not None:
@@ -391,11 +403,13 @@ if __name__ == "__main__":
                     monJoueur.affiche(etat_partie, True, None)
             elif etat_partie == ETAT_PARTIE_PREPARATION:
                 ecran_preparation.affiche(playWithBelote, play10en10)
-                for pseudo in listeJoueurOrdreTour:
+                for pseudo in listePseudoOrdreTour:
                     dictionnaire_joueur[pseudo].affiche(etat_partie, False,
-                                                        dictionnaire_joueur[listeJoueurOrdreTour[0]])
+                                                        dictionnaire_joueur[listePseudoOrdreTour[0]])
             else:
                 SCREEN.blit(IMAGE_SAUVEGARE_BOUTON, (X_IMAGE_SAUVEGARE_BOUTON, Y_IMAGE_SAUVEGARE_BOUTON))
+                SCREEN.blit(IMAGE_RELOAD_BOUTON, (X_IMAGE_RELOAD_BOUTON, Y_IMAGE_RELOAD_BOUTON))
+                SCREEN.blit(IMAGE_TAKE_BACK_BOUTON, (X_IMAGE_TAKE_BACK_BOUTON, Y_IMAGE_TAKE_BACK_BOUTON))
                 for joueur in dictionnaire_joueur.values():
                     joueur.affiche(etat_partie, joueurTour == joueur, joueurDistribution)
                 pli.affiche()

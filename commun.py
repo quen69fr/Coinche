@@ -19,6 +19,7 @@ EVT_PLAY = 'play'
 EVT_DEAL = 'deal'
 EVT_MESSAGE = 'message'
 EVT_SAUVEGARDE = 'sauvegarde'
+EVT_TAKE_BACK = 'take_back'
 
 PARAM_PSEUDO = 'pseudo'
 PARAM_CARTE = 'carte'

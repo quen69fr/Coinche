@@ -30,9 +30,9 @@ liste_events = []
 
 if MODE_SAUVEGARDE:
     with open(FICHIER_SAUVEGARDE, 'r') as fichier:
-        dic_sauvegarde = json.load(fichier)
-        if len(dic_sauvegarde['events']) > 0:
-            for dic_event in dic_sauvegarde['events']:
+        liste_sauvegarde = json.load(fichier)
+        if len(liste_sauvegarde) > 0:
+            for dic_event in liste_sauvegarde:
                 event = Evenement(None, None, None)
                 event.__dict__.update(dic_event)
                 liste_events.append(event)
@@ -41,9 +41,17 @@ if MODE_SAUVEGARDE:
 
 @app.route(f'/coinche/{EVT_SAUVEGARDE}')
 def sauvegarde():
-    dic = {'events': [event.__dict__ for event in liste_events]}
+    liste = [event.__dict__ for event in liste_events]
     with open(FICHIER_SAUVEGARDE, "w") as fichier:
-        json.dump(dic, fichier)
+        json.dump(liste, fichier)
+    return str(1)
+
+
+@app.route(f'/coinche/{EVT_TAKE_BACK}')
+def take_back():
+    if len(liste_events) > 0:
+        liste_events.pop(-1)
+    Evenement.id_max -= 1
     return str(1)
 
 

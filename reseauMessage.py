@@ -13,7 +13,7 @@ class ReseauClient:
     def __init__(self):
         self.pseudoJoueur = None
         self.adresse_ip = None
-        self.port = None
+        self.port = '12800'
         self.id_actuelle = 0
         self.evenementsNonFait = []
         self.time_last_request = 0
@@ -40,6 +40,9 @@ class ReseauClient:
 
     def sauvegarde(self):
         self.envoie_au_serveur(EVT_SAUVEGARDE)
+
+    def take_back(self):
+        self.envoie_au_serveur(EVT_TAKE_BACK)
 
     def playerList(self):
         return self.envoie_au_serveur(PLAYER_LIST)
