@@ -64,7 +64,7 @@ if __name__ == "__main__":
                 if etat_partie == ETAT_PARTIE_JEU or etat_partie == ETAT_PARTIE_ENCHERE:
                     r = messages.gere_clavier(event)
                     if r is not None:
-                        messages.liste_messages.append((r, monPseudo))
+                        messages.nouveauMessage(r, monPseudo)
                         reseau.envoieMessage(r)
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                             continue
 
                     elif evt[EVENT_TYPE] == EVT_MESSAGE:
-                        messages.liste_messages.append((evt[EVENT_CONTENU], evt[EVENT_PSEUDO]))
+                        messages.nouveauMessage(evt[EVENT_CONTENU], evt[EVENT_PSEUDO])
 
             if action_possible and not reseau.evenementsNonFait:
                 if clic_droit:
@@ -246,6 +246,7 @@ if __name__ == "__main__":
                         play10en10 = False
                         reseau.id_actuelle = 0
                         listePseudoOrdreTour = sorted(listePseudoOrdreTour)
+                        messages = Messages()
                         ecran_preparation.listeJoueurOrdreTour = listePseudoOrdreTour
                         continue
                     elif X_IMAGE_TAKE_BACK_BOUTON < x_souris < X_IMAGE_TAKE_BACK_BOUTON + LARGEUR_IMAGE_BOUTON \
@@ -254,7 +255,7 @@ if __name__ == "__main__":
                     else:
                         r = messages.gere_clic(x_souris, y_souris)
                         if r is not None:
-                            messages.liste_messages.append((r, monPseudo))
+                            messages.nouveauMessage(r, monPseudo)
                             reseau.envoieMessage(r)
                         historiqueEnchere.gere_clic(x_souris, y_souris)
                         if joueurPremier in monEquipe.joueurs:
@@ -419,7 +420,7 @@ if __name__ == "__main__":
                     fenetre_enchere.affiche()
                 elif etat_partie == ETAT_PARTIE_JEU:
                     for joueur, couleur in belotesTour:
-                        joueur.afficheBelote((joueur, belotesTour) in belotes)
+                        joueur.afficheBelote((joueur, couleur) in belotes)
                 messages.affiche()
                 historiqueEnchere.affiche(encheres)
 

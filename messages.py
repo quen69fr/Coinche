@@ -26,6 +26,8 @@ class Messages:
         self.bouton_envoyer = Bouton(self.x + self.largeur - largeur_bouton_envoyer - m, self.y + self.hauteur - m - h
                                      , '', largeur_bouton_envoyer, h, 'Envoyer', tailleTexte=18)
 
+        self.non_lus = 0
+
     def affiche(self):
         self.bouton.affiche()
         if self.bouton.selectionner:
@@ -56,6 +58,13 @@ class Messages:
                         affiche_texte(t, self.x + 10, y, taille=self.taille_police)
                     else:
                         affiche_texte(t, self.x + 10, y, couleur=GRIS_FONCE, taille=self.taille_police)
+        if self.non_lus > 0:
+            pygame.gfxdraw.filled_circle(SCREEN, int(self.bouton.x + self.bouton.largeur), int(self.bouton.y) + 5,
+                                         14, NOIR)
+            pygame.gfxdraw.filled_circle(SCREEN, int(self.bouton.x + self.bouton.largeur), int(self.bouton.y) + 5,
+                                         11, GRIS_CLAIR)
+            affiche_texte(str(self.non_lus), int(self.bouton.x + self.bouton.largeur), int(self.bouton.y) + 6,
+                          taille=20, x_0left_1centre_2right=1, y_0top_1centre_2bottom=1)
 
     def gere_clavier(self, event):
         if self.bouton.selectionner:
@@ -77,6 +86,7 @@ class Messages:
                 self.bouton.selectionner = False
             else:
                 self.bouton.selectionner = True
+                self.non_lus = 0
         elif self.bouton.selectionner:
             if self.bouton.selectionner:
                 if self.bouton_envoyer.clic(x_souris, y_souris):
@@ -85,3 +95,8 @@ class Messages:
                         self.message = ''
                         return r
         return None
+
+    def nouveauMessage(self, message, pseudo):
+        self.liste_messages.append((message, pseudo))
+        if not self.bouton.selectionner:
+            self.non_lus += 1

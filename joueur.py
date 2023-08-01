@@ -92,7 +92,6 @@ class HistoriqueEnchere:
         self.bouton.affiche()
         if self.bouton.selectionner:
             afficheBulleRectanle(self.x, self.y, self.largeur, self.hauteur, 'h')
-            # TODO
             l = encheres[:]
             l.reverse()
             y = self.y + self.hauteur - 10
@@ -115,12 +114,17 @@ class HistoriqueEnchere:
                     affiche_texte(t, xt, y, taille=self.taille_police, x_0left_1centre_2right=2)
                     if affiche_couleur:
                         SCREEN.blit(IMAGES_VIGNETTES[enchere.couleur], (x - LARGEUR_VIGNETTE, y - 2))
+                elif pseudo == HistoriqueEnchere.monCoequipierPseudo:
+                    x = self.x + self.largeur - 10
+                    xt = x
+                    if affiche_couleur:
+                        xt -= LARGEUR_VIGNETTE + 5
+                    affiche_texte(t, xt, y, couleur=GRIS_FONCE, taille=self.taille_police, x_0left_1centre_2right=2)
+                    if affiche_couleur:
+                        SCREEN.blit(IMAGES_VIGNETTES[enchere.couleur], (x - LARGEUR_VIGNETTE, y - 2))
                 else:
-                    if pseudo == HistoriqueEnchere.monCoequipierPseudo:
-                        l = affiche_texte(t, self.x + 10, y, taille=self.taille_police, return_largeur=True)
-                    else:
-                        l = affiche_texte(t, self.x + 10, y, couleur=GRIS_FONCE, taille=self.taille_police,
-                                          return_largeur=True)
+                    l = affiche_texte(t, self.x + 10, y, couleur=GRIS_FONCE, taille=self.taille_police,
+                                      return_largeur=True)
                     if affiche_couleur:
                         SCREEN.blit(IMAGES_VIGNETTES[enchere.couleur], (self.x + 10 + l + 5, y - 2))
 
